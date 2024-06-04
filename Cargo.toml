@@ -1,0 +1,14 @@
+[package]
+name = "lsm6dso16is"
+version = "0.1.0"
+edition = "2021"
+description = "This crate provides a platform agnostic driver for the ST LSM6DSO16IS accelerometer/gyroscope."
+readme = "README.md"
+license = "BSD 3-Clause License"
+exclude = [
+    "target/debug/*"
+    ]
+keywords = ["st", "mems", "driver", "embedded-hal", "accelerometer-gyroscope"]
+[dependencies]
+embedded-hal = "1.0.0"
+bitfield = "0.15.0"
