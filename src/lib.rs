@@ -12,7 +12,7 @@
 //!
 //!```rust
 //! use lsm6dso16is::{Lsm6dso16is, I2CAddress};
-//!-
+//!
 //! let mut sensor = Lsm6dso16is::new_i2c(i2c, I2CAddress::Address0).unwrap();
 //! ```
 //! 
