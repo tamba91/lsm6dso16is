@@ -242,11 +242,8 @@ pub struct UcfLineExtT {
 
 #[repr(u8)]
 pub enum Op {
-    MemsUcfOpRead = 0,
     MemsUcfOpWrite = 1,
     MemsUcfOpDelay = 2,
-    MemsUcfOpPollSet = 3,
-    MemsUcfOpPollReset = 4,
 }
 
 bitfield! {
@@ -894,7 +891,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
     ///
     /// * Result
     ///     * bool: If true an unread accelerometer sample is already available when the data ready signal to INT1/2 pin is enabled.
-    ///             If false no unread pressure sample is available when the data ready signal to INT1/2 is enabled.    
+    ///             If false no unread data sample is available when the data ready signal to INT1/2 is enabled.    
     ///     * Error: The failure of a bus operation returns Error::Bus(B).
     ///
     /// # Example 
@@ -929,7 +926,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
     ///
     /// * Result
     ///     * bool: If true an unread gyroscope sample is already available when the data ready signal to INT1/2 pin is enabled.
-    ///             If false no unread pressure sample is available when the data ready signal to INT1/2 is enabled.    
+    ///             If false no unread data sample is available when the data ready signal to INT1/2 is enabled.    
     ///     * Error: The failure of a bus operation returns Error::Bus(B).
     ///
     /// # Example 
@@ -992,7 +989,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
         Ok(())
     }
 
-    pub fn load_sensor_fusion<T: DelayNs>(
+    pub fn load_ispu_bytecode<T: DelayNs>(
         &mut self,
         raw: &[UcfLineExtT],
         delay: &mut T,
@@ -1001,13 +998,10 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
         self.func_cfg_access_set_sw_reset_ispu(false as u8)?;
         for i in raw {
             match i.op {
-                Op::MemsUcfOpRead => todo!(),
                 Op::MemsUcfOpWrite => {
                     self.write_raw_bytes(&[i.address as u8, i.data as u8])?;
                 }
                 Op::MemsUcfOpDelay => delay.delay_ms(i.data as u32),
-                Op::MemsUcfOpPollSet => todo!(),
-                Op::MemsUcfOpPollReset => todo!(),
             }
         }
 
@@ -1030,7 +1024,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
         Ok(())
     }
 
-    pub fn get_ispu_interrupt_status_vector(&mut self) -> Result<IspuIntStatus, Error<B::Error>> {
+    pub fn get_ispu_int_status(&mut self) -> Result<IspuIntStatus, Error<B::Error>> {
         let ispu_int_status = IspuIntStatus(self.ispu_int_status_mainpage_get()?);
 
         Ok(ispu_int_status)
