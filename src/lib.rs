@@ -234,19 +234,30 @@ pub enum Pin {
     Int2,
 }
 
+///
+/// This struct represents a single bytecode instruction and is used in order to create an 
+/// array of UfcLineExt representing a series of bytecode instructions
+///
 pub struct UcfLineExtT {
     pub op: Op,
     pub address: u8,
     pub data: u8,
 }
 
+///
+/// This enum represents the operations available for a bytecode instruction.
+///
 #[repr(u8)]
 pub enum Op {
     MemsUcfOpWrite = 1,
     MemsUcfOpDelay = 2,
 }
 
+
 bitfield! {
+    ///
+    /// The ISPU bitfield. A bit in this bitfield is set to 1 if the corresponding ISPU algorithm generated an interrupt.
+    /// 
     pub struct IspuIntStatus(u32);
     pub ia_ispu_0, _: 0, 0;
     pub ia_ispu_1, _: 1, 1;
@@ -989,6 +1000,19 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
         Ok(())
     }
 
+    ///
+    /// This method will load an ISPU bytecode algorithm into the sensor.
+    ///  # Arguments
+    ///
+    /// * raw: a reference to an array of UcfLineExtT structs, representing the bytecode.
+    /// * delay: a mutable reference to a timer implementing the DelayNs trait of the embedded-hal.
+    /// # Returns
+    ///
+    /// * Result
+    ///     * ()    
+    ///     * Error: The failure of a bus operation returns Error::Bus(B).
+    ///
+    ///
     pub fn load_ispu_bytecode<T: DelayNs>(
         &mut self,
         raw: &[UcfLineExtT],
@@ -1008,6 +1032,19 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
         Ok(())
     }
 
+    ///
+    /// This method reads the ISPU algorithm output.
+    ///  # Arguments
+    ///
+    /// * start_reg: an ISPU start register from which start reading the output, 
+    /// * buf: a mutable reference to an array of u8, it's the buffer where the ISPU output is stored, in order to share algorithm results.
+    /// # Returns
+    ///
+    /// * Result
+    ///     * ()    
+    ///     * Error: The failure of a bus operation returns Error::Bus(B).
+    ///
+    ///
     pub fn read_ispu_output(
         &mut self,
         start_reg: u8,
@@ -1024,6 +1061,19 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
         Ok(())
     }
 
+    ///
+    /// The purpose of this method is to allow the external microcontroller to understand which ISPU algorithms have generated the interrupt.
+    ///
+    ///  # Arguments
+    ///
+    /// * None
+    ///
+    /// # Returns
+    ///
+    /// * Result
+    ///     * IspuIntStatus: a bitfield of 30 elements. A bit in this bitfield is set to 1 if the corresponding ISPU algorithm generated an interrupt.     
+    ///     * Error: The failure of a bus operation returns Error::Bus(B).
+    ///
     pub fn get_ispu_int_status(&mut self) -> Result<IspuIntStatus, Error<B::Error>> {
         let ispu_int_status = IspuIntStatus(self.ispu_int_status_mainpage_get()?);
 
