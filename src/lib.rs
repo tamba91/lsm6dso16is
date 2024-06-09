@@ -47,8 +47,9 @@
 //! ```rust
 //! use embedded_hal_bus::spi::RefCellDevice;
 //! use lsm6dso16is::Lsm6dso16is;
-//! let spi = RefCellDevice::new_no_delay(&spi, cs).unwrap(); // cs is the chip select pin
-//! let mut sensor = Lsm6dso16is::new_spi(spi).unwrap();
+//! let spi_bus = RefCell::new(spi);    // spi is the SPI instance provided by the microcontroller HAL that must implement the SpiBus trait of embedded-hal
+//! let spi_device = RefCellDevice::new_no_delay(&spi_bus, cs).unwrap(); // cs is the chip select pin
+//! let mut sensor = Lsm6dso16is::new_spi(spi_device).unwrap();
 //! ```
 //! 
 //! ## Setting ODR (output data rate) and and FS (full scale) for the accelerometer and the gyroscope:
@@ -59,7 +60,7 @@
 //! sensor.set_odr_xl(104.0, false).unwrap(); // accelerometer odr 125Hz, low power mode disabled
 //! sensor.set_odr_g(12.5, false).unwrap(); // gyroscope odr 12.5Hz, low power mode disabled
 //! sensor.set_fs_g(GFullScale::Dps125).unwrap(); // gyroscope full scale 125 degree per second
-//! sensor.set_fs_xl(XlFullScale::G2).unwrap(); // // accelerometer full scale 2g
+//! sensor.set_fs_xl(XlFullScale::G2).unwrap(); // accelerometer full scale 2g
 //! ```
 //! 
 //! Read acceleration and angular rate data when available
@@ -68,11 +69,11 @@
 //! loop {
 //!     if sensor.is_xl_data_avail().unwrap() == true {
 //!         let xl_axes = sensor.get_xl_axes().unwrap();
-//!         writeln!(tx, "x: {} mg, y: {} mg, z: {} mg", xl_axes.0, xl_axes.1, xl_axes.2).unwrap(); // acceleration data for x, y, z axes in millig
+//!         writeln!(tx, "x: {} mg, y: {} mg, z: {} mg", xl_axes.0, xl_axes.1, xl_axes.2).unwrap(); // accelerometer data for x, y, z axes in millig
 //!     }
 //!     if sensor.is_g_data_avail().unwrap() == true {
 //!         let g_axes = sensor.get_g_axes().unwrap();
-//!         writeln!(tx, "x: {} dps, y: {} dps, z: {} dsp", g_axes.0, g_axes.1, g_axes.2).unwrap(); // degree per second data for x, y, z axes
+//!         writeln!(tx, "x: {} dps, y: {} dps, z: {} dsp", g_axes.0, g_axes.1, g_axes.2).unwrap(); // gyroscope data for x, y, z axes
 //!     }
 //!      
 //! }
@@ -348,6 +349,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
     ///        26.0Hz (low power and high performance), 52.0Hz (low power and high performance), 104.0Hz (low power and high performance),
     ///        208.0Hz (low power and high performance), 416.0Hz (high performance only), 833.0Hz (high performance only), 
     ///        1667.0Hz (high performance only), 3333.0Hz (high performance only) 6667.0Hz (high performance only).
+    /// 
     /// * enable_low_power_mode: bool, if true low power mode is enabled (not all ODRs are available)
     ///                           
     /// # Note
@@ -484,6 +486,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
     ///        26.0Hz (low power and high performance), 52.0Hz (low power and high performance), 104.0Hz (low power and high performance),
     ///        208.0Hz (low power and high performance), 416.0Hz (high performance only), 833.0Hz (high performance only), 
     ///        1667.0Hz (high performance only), 3333.0Hz (high performance only) 6667.0Hz (high performance only).
+    /// 
     /// * enable_low_power_mode: bool, if true low power mode is enabled (not all ODRs are available)
     ///                           
     /// # Note
@@ -618,7 +621,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
     ///     * f32: temperature in °C. The value is expressed as 32-bit floating point.           
     ///     * Error: The failure of a bus operation returns Error::Bus(B).
     ///  
-    pub fn get_temp(&mut self) -> Result<f32, Error<B::Error>> {
+    pub fn get_t(&mut self) -> Result<f32, Error<B::Error>> {
         let raw_temp = self.out_temp_get()?;
 
         Ok(raw_temp as f32 / 256.0 + 25.0)
@@ -713,7 +716,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
     /// * Result
     ///     * (i16, i16, i16): Raw accelerometer axes value (x axis, y axis, z axis). 
     ///                        The values are expressed as two’s complement 16-bit integer.
-    ///                        To obtain the real accelerometer values multiply each member of the tuple by the sensitivity 
+    ///                        To obtain the real values multiply each member of the tuple by the sensitivity 
     ///                        obtained from `get_sensitivity_xl` method
     ///     * Error: The failure of a bus operation returns Error::Bus(B).
     /// 
@@ -837,7 +840,7 @@ impl<B: lsm6dso16is_reg::BusOperation> Lsm6dso16is<B> {
     /// * Result
     ///     * (i16, i16, i16): Raw gyroscope axes value (x axis, y axis, z axis). 
     ///                        The values are expressed as two’s complement 16-bit integer.
-    ///                        To obtain the real gyroscope values multiply each member of the tuple by the sensitivity 
+    ///                        To obtain the real values multiply each member of the tuple by the sensitivity 
     ///                        obtained from `get_sensitivity_g` method
     ///     * Error: The failure of a bus operation returns Error::Bus(B).
     ///
